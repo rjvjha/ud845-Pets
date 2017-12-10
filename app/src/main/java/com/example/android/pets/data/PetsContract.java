@@ -6,9 +6,9 @@ import android.provider.BaseColumns;
  * Created by Rahul on 29-10-2017.
  */
 
-public final class PetsContract {
+public class PetsContract {
 
-    private PetsContract(){};
+    private PetsContract(){}
 
     public static final class PetsEntry implements BaseColumns{
         public static final String TABLE_NAME = "pets";

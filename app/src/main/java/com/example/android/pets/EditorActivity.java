@@ -15,6 +15,8 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -26,6 +28,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.example.android.pets.data.PetDbHelper;
+import com.example.android.pets.data.PetsContract;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -62,6 +68,26 @@ public class EditorActivity extends AppCompatActivity {
         mGenderSpinner = (Spinner) findViewById(R.id.spinner_gender);
 
         setupSpinner();
+    }
+    // Helper method to get user input and save it into pets table.
+    private long insertData(){
+        // Getting the user input from editable fields and saving it into variables
+        String name = mNameEditText.getText().toString();
+        String breed = mBreedEditText.getText().toString();
+        int weight = Integer.parseInt(mWeightEditText.getText().toString());
+
+        // Getting wrtable db object
+        PetDbHelper dbHelper = new PetDbHelper(this);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // Setting values using ContentValues
+        ContentValues values = new ContentValues();
+        values.put(PetsContract.PetsEntry.COLUMN_PET_NAME, name);
+        values.put(PetsContract.PetsEntry.COLUMN_PET_BREED, breed);
+        values.put(PetsContract.PetsEntry.COLUMN_PET_GENDER,mGender);
+        values.put(PetsContract.PetsEntry.COLUMN_PET_WEIGHT,weight);
+
+        return db.insert(PetsContract.PetsEntry.TABLE_NAME, null, values);
     }
 
     /**
@@ -117,7 +143,13 @@ public class EditorActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Do nothing for now
+                long rowId = insertData();
+                if(rowId!= -1){
+                    Toast.makeText(this,"Pets saved with id: "+ rowId,Toast.LENGTH_SHORT).show();
+                    finish();
+                } else{
+                    Toast.makeText(this, "Error with saving pet.",Toast.LENGTH_SHORT).show();
+                }
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:
