@@ -22,6 +22,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -30,15 +33,15 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetsContract;
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
-public class CatalogActivity extends AppCompatActivity {
+public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>{
 
+    private static final int LOADER_ID = 0;
+    private PetCursorAdapter cursorAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,30 +57,13 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        displayDatabaseInfo();
-    }
-
-    private void displayDatabaseInfo() {
-        // Define a projection that specifies which columns from the database
-        // you will actually use after this query.
-        String [] projection = {PetsContract.PetsEntry._ID,PetsContract.PetsEntry.COLUMN_PET_NAME,
-        PetsContract.PetsEntry.COLUMN_PET_BREED};
-//        String selection = PetsContract.PetsEntry.COLUMN_PET_GENDER + "=?";
-//        String [] selectionArgs = {String.valueOf(PetsContract.PetsEntry.GENDER_MALE)};
-
-        // Perform this raw SQL query "SELECT * FROM pets"
-        // to get a Cursor that contains all rows from the pets table.
-
-        Cursor cursor = getContentResolver().query(
-                PetsContract.PetsEntry.CONTENT_URI,
-                projection, null, null , null);
-
         ListView listView = (ListView) findViewById(R.id.list_view_pet);
         View emptyView = findViewById(R.id.empty_view);
         listView.setEmptyView(emptyView);
-
-        PetCursorAdapter adapter = new PetCursorAdapter(this, cursor);
-        listView.setAdapter(adapter);
+        cursorAdapter = new PetCursorAdapter(this, null);
+        listView.setAdapter(cursorAdapter);
+        // Kick off the loader
+        getSupportLoaderManager().initLoader(LOADER_ID,null,this);
 
     }
 
@@ -106,22 +92,47 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertData();
-                displayDatabaseInfo();
+                //displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
                 // Do nothing for now
                 int rows = getContentResolver().delete(PetsContract.PetsEntry.CONTENT_URI, null, null);
                 Toast.makeText(this,"No of rows deleted: "+ rows,Toast.LENGTH_SHORT).show();
-                displayDatabaseInfo();
+                //displayDatabaseInfo();
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
+
+    // Loader Callback methods are implemented here:
+
     @Override
-    protected void onStart() {
-        super.onStart();
-        displayDatabaseInfo();
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String [] projection = {
+                PetsContract.PetsEntry._ID,
+                PetsContract.PetsEntry.COLUMN_PET_NAME,
+                PetsContract.PetsEntry.COLUMN_PET_BREED};
+        return new CursorLoader(this,
+                PetsContract.PetsEntry.CONTENT_URI,
+                projection,null,null,null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        // Swap the new cursor in.  (The framework will take care of closing the
+        // old cursor once we return.)
+        cursorAdapter.swapCursor(data);
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // This is called when the last Cursor provided to onLoadFinished()
+        // above is about to be closed.  We need to make sure we are no
+        // longer using it.
+        cursorAdapter.swapCursor(null);
+
     }
 }
