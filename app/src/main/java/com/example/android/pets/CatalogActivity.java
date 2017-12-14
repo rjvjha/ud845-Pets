@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.example.android.pets;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -30,6 +31,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -64,6 +66,18 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         listView.setAdapter(cursorAdapter);
         // Kick off the loader
         getSupportLoaderManager().initLoader(LOADER_ID,null,this);
+        // OnClickItem Listener
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // Uri with appwnded id
+                Uri petUri = ContentUris.withAppendedId(PetsContract.PetsEntry.CONTENT_URI, id);
+                Intent editPetIntent = new Intent(CatalogActivity.this, EditorActivity.class);
+                editPetIntent.setData(petUri);
+                startActivity(editPetIntent);
+
+            }
+        });
 
     }
 
